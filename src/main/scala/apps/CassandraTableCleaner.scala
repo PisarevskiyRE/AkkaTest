@@ -18,8 +18,8 @@ object CassandraTableCleaner {
   def clearTables(): Unit = {
     val daysFree = Source(
       for {
-        hotelId <- List("testHotel")
-        roomNumber <- 1 to 100
+        hotelId <- (1 to 10).map(i => s"hotel_${i}")
+        roomNumber <- 1 to 10
         day <- (0 until 365).map(LocalDate.of(2023,1,1).plusDays(_))
       } yield (hotelId, roomNumber, day)
     )

@@ -26,8 +26,8 @@ object DemoHotel {
 
 
       //  hotel ! MakeReservation("Тест резерва", Date.valueOf("2023-05-01"),  Date.valueOf("2023-05-05"), 101, logger)
-        hotel ! ChangeReservation("UW0D4Z5NTM", Date.valueOf("2023-05-01"),  Date.valueOf("2023-05-11"), 101, logger)
-      //  hotel ! CancelReservation("UW0D4Z5NTM", logger)
+       // hotel ! ChangeReservation("UJFPDLYKRQ", Date.valueOf("2023-05-01"),  Date.valueOf("2023-05-11"), 101, logger)
+        hotel ! CancelReservation("UJFPDLYKRQ", logger)
       Behaviors.empty
     }
 

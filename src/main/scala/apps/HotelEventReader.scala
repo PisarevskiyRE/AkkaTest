@@ -57,10 +57,36 @@ object HotelEventReader {
     Future.sequence(reservationGuestFuture :: reservationGuestDateFuture :: blockedDaysFutures.toList).map(_ => ())
   }
 
+  def removeReservation(reservation: Reservation): Future[Unit] = {
+    val Reservation(guestId, hotelId, startDate, endDate, roomNumber, confirmationNumber) = reservation
+    val startLocalDate = startDate.toLocalDate
+    val endLocalDate = endDate.toLocalDate
+    val daysBlocked = startLocalDate.until(endLocalDate, ChronoUnit.DAYS).toInt
+
+    val blockedDaysFutures = for {
+      days <- 0 until daysBlocked
+    } yield session.executeWrite(
+      "UPDATE hotel.available_rooms_by_hotel_date SET is_available = true WHERE " +
+        s"hotel_id='$hotelId' and date='${startLocalDate.plusDays(days)}' and room_number=$roomNumber"
+    ).recover(e => println(s"Room day unblocking failed: ${e}"))
+
+    val reservationGuestDateFuture = session.executeWrite(
+      "DELETE FROM reservation.reservations_by_hotel_date WHERE " +
+        s"hotel_id='$hotelId' and start_date='$startDate' and room_number=$roomNumber"
+    ).recover(e => println(s"reservation removal for date failed: ${e}"))
+
+    val reservationGuestFuture = session.executeWrite(
+      "DELETE FROM reservation.reservations_by_guest WHERE " +
+        s"guest_last_name='ROCKTHEJVM' and confirm_number='$confirmationNumber'"
+    ).recover(e => println(s"reservation removal for guest failed: ${e}"))
+
+    Future.sequence(reservationGuestFuture :: reservationGuestDateFuture :: blockedDaysFutures.toList).map(_ => ())
+  }
+
 
 
   val eventsForTestHotel = readJournal
-    .eventsByPersistenceId("testHotel", 0 , Long.MaxValue)
+    .eventsByPersistenceId("hotel_5", 0 , Long.MaxValue)
     .map(_.event)
     .mapAsync(8) {
       case ReservationAccepted(res) =>
@@ -68,10 +94,13 @@ object HotelEventReader {
         makeReservation(res)
       case ReservationUpdated(oldRes, newRes) =>
         println(s"Резервация изменена с $oldRes на $newRes")
-        Future.successful(())
+        for {
+          _ <- removeReservation(oldRes)
+          _ <- makeReservation(newRes)
+        } yield ()
       case ReservationCanceled(res) =>
         println(s"Резервация отменена $res")
-        Future.successful(())
+        removeReservation(res)
     }
   def main(args: Array[String]): Unit = {
 
