@@ -35,7 +35,7 @@ case class Reservation(
 object Reservation{
 
   // создание резервации и генерация confirmationNumber
-  def make(guestId: String, hotelId: String, startDate: Date, endDate: Date,roomNumber: Int): Reservation = {
+  def make(guestId: String, hotelId: String, startDate: Date, endDate: Date, roomNumber: Int): Reservation = {
 
     val chars = ('A' to 'Z') ++ ('0' to '9')
     val nChars = chars.length
@@ -45,3 +45,8 @@ object Reservation{
   }
 
 }
+
+
+
+
+
